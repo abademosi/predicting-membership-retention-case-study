@@ -1,14 +1,14 @@
 ## Overview
 This project is a professional case study demonstrating how data analytics and predictive modeling can be used to understand membership retention risk and revenue exposure for an accredited business organization.
 
-Using internal membership and accreditation data, I built an **interactive analytics system** and a **logistic regression model** to identify at-risk members, quantify expected revenue loss, and support targeted retention strategies.
-To protect confidentiality, this repository contains **redacted code and documentation only**; no proprietary data is shared.
+Using internal membership and accreditation data, I built an interactive analytics system and a logistic regression model to identify at-risk members, quantify expected revenue loss, and support targeted retention strategies.
+To protect confidentiality, this repository contains redacted code and documentation only; no proprietary data is shared.
 
 ## Business Problem
 Membership retention is a critical driver of revenue and organizational stability. Leadership needed a data-driven way to:
 * Understand which accredited businesses are most likely to drop membership
 * Identify key predictors of churn
-* Estimate **revenue at risk** under current retention trends
+* Estimate revenue at risk under current retention trends
 * Prioritize outreach using limited staff resources
 
 ## Tools & Technologies
@@ -86,7 +86,7 @@ Using membership fee ranges, I estimated expected revenue at risk by multiplying
 * Ranked list of high-value, high-risk accounts
 
 ## Ethical Note
-This repository is intentionally designed as a **professional case study**.
+This repository is intentionally designed as a professional case study.
 All sensitive data has been removed or redacted to preserve confidentiality while still demonstrating analytical rigor, modeling decisions, and business impact.
 
 ## Why This Project Matters
