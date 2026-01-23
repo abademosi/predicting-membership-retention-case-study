@@ -1,55 +1,17 @@
 library(dplyr)
-library(scales)
 
-model_df <- df2 %>%
-  select(Business.ID, Business, `Accredited.`, Size, Employees, Customers,
-         Revenue, County, Rating, Joined, NAICS_2digit, NAICS.Text, Dropped) %>%
-  mutate(Accredited = ifelse(tolower(as.character(`Accredited.`)) == "true", 1, 0),
-         Employees  = suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(Employees)))),
-         Customers  = suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(Customers)))),
-         Revenue    = suppressWarnings(as.numeric(gsub("[^0-9.]", "", as.character(Revenue)))),
-         Size         = as.factor(Size),
-         County       = as.factor(County),
-         Rating       = as.factor(Rating),
-         NAICS_2digit = as.factor(NAICS_2digit),
-         Joined       =  parse_joined(df2$Joined),
-         Joined_Year  = as.numeric(format(Joined, "%Y")), # Extract year only
-         Dropped      = as.numeric(Dropped)) %>%
-  select(-`Accredited.`, -Joined) %>%     # Remove redundant columns
-  filter(!is.na(Dropped)) 
-
-
-# Define predictor variable names for modeling
-score_vars <- c("Size","Employees","Customers","Revenue",
-                "County","Rating","Joined_Year","NAICS_2digit")
-
-
-# Format model data for logistic regression
-model_data <- model_df %>%
-  select(Business.ID, Business, Accredited, Dropped, NAICS.Text,all_of(score_vars)) %>%
-  mutate(
-    Size         = factor(Size),
-    County       = factor(County),
-    Rating       = factor(Rating),
-    NAICS_2digit = factor(NAICS_2digit),
-    Employees    = suppressWarnings(as.numeric(Employees)),
-    Customers    = suppressWarnings(as.numeric(Customers)),
-    Revenue      = suppressWarnings(as.numeric(Revenue))
-  ) %>%
-  tidyr::drop_na(Dropped, all_of(score_vars)) # Remove rows with missing predictors
-
-
-# Logistic regression predicting likelihood of business dropping
+# Logistic regression predicting the likelihood of a business dropping
 drop_model <- glm(
   Dropped ~ Size + Employees + Customers + Revenue +
-    County + Rating + Joined_Year + NAICS_2digit,
+    County + Rating + Joined_Year + industry,
   data = model_data, family = binomial
 )
 
-# Predict probability of dropping for each business
+# Predict the probability of dropping for each business
 model_data$pred_prob <- predict(drop_model, type = "response")
 model_data$pred_class <- ifelse(model_data$pred_prob >= 0.5, 1, 0)
-# Find accuracy of model
+
+# Find the accuracy of the model
 conf_mat <- table(
   Predicted = model_data$pred_class,
   Actual = model_data$Dropped
@@ -60,8 +22,8 @@ accuracy
 
 # Create risk table with predicted probabilities and risk bands
 risk_table <- model_data %>%
-  select(Business.ID, Business, County, Rating, Size, Employees, Revenue,
-         Joined_Year, NAICS_2digit, NAICS.Text, Accredited, Dropped, pred_prob) %>%
+  select(BusinessID, Business_Name, County, Rating, Size, Employees, Revenue,
+         Joined_Year, Industry, Accredited, Dropped, pred_prob) %>%
   filter(Dropped==0)%>% # Focus on active members
   arrange(desc(pred_prob)) %>% # Sort by highest risk
   mutate(
@@ -78,7 +40,7 @@ table(risk_table$RiskBand)
 
 
 #- Revenue at Risk from predicted drop probabilities-
-# Assumptions from business rules:
+# Membership costs by size from business rules:
 # Micro: $300–$500
 # Small: $500–$800
 # Medium: $800–$1,500
@@ -140,8 +102,8 @@ rev_by_band <- risk_table_rev %>%
 top_accounts <- risk_table_rev %>%
   arrange(desc(rev_at_risk_mid)) %>%
   select(
-    Business.ID, Business, County, Rating, Size, Employees, Revenue,
-    Joined_Year, NAICS_2digit, pred_prob,
+    Business_ID, Business_Name, County, Rating, Size, Employees, Revenue,
+    Joined_Year, Industry, pred_prob,
     fee_low, fee_mid, fee_high,
     rev_at_risk_low, rev_at_risk_mid, rev_at_risk_high
   ) %>%
@@ -161,3 +123,4 @@ print(rev_by_band %>%
 write.csv(risk_table_rev,"business_drop_risk_with_revenue.csv",row.names = FALSE)
 write.csv(rev_by_band,   "revenue_at_risk_by_band.csv",        row.names = FALSE)
 write.csv(top_accounts,  "top_revenue_at_risk_accounts.csv",   row.names = FALSE)
+
